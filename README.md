@@ -26,28 +26,28 @@
 
 ## 安装
 
-> ⚠️ **插件目录必须叫 `bangumi-list`。** GitHub 的「Download ZIP」解压出来是 `bangumi-list-main/`(带分支名后缀),直接丢进 `plugins/` 虽然也能跑,但目录名会变成 `bangumi-list-main`,和文档、日后的更新机制对不上。装之前先改名。
+### 推荐:下载 Release
 
-**方式 A:git clone(目录名天然正确,推荐)**
+去 **[Releases](https://github.com/ThornsW/bangumi-list/releases/latest)** 下载 `bangumi-list-x.y.z.zip`,后台「插件 → 安装插件 → 上传插件」选它,**无需改名**。
+
+> ⚠️ 别用 Release 页面上的「Source code (zip)」,也别用仓库主页绿色按钮的「Download ZIP」—— 那两个解压出来分别是 `bangumi-list-x.y.z/` 和 `bangumi-list-main/`,目录名不对。
+
+### 从源码安装
+
+插件目录必须叫 `bangumi-list`,否则和文档、日后的更新机制对不上。
 
 ```bash
+# 方式 A:git clone(目录名天然正确)
 cd wp-content/plugins/
 git clone https://github.com/ThornsW/bangumi-list.git
-```
 
-**方式 B:服务器上解压后改名**
-
-```bash
+# 方式 B:下载源码 zip 后改名
 cd wp-content/plugins/
 unzip ~/bangumi-list-main.zip
 mv bangumi-list-main bangumi-list
 ```
 
-**方式 C:后台上传 zip**
-
-先在本地解压 → 把文件夹改名为 `bangumi-list` → 重新压缩成 `bangumi-list.zip` → 后台「插件 → 安装插件 → 上传插件」。
-
-装好之后:
+### 装好之后
 
 1. 后台「插件」启用 **Bangumi List 看番清单**
 2. 新建一个页面,内容写上短代码 `[anime_list]`,发布(建议用全宽 / 空白页面模板)
