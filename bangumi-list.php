@@ -3,17 +3,19 @@
  * Plugin Name:       Bangumi List 看番清单
  * Plugin URI:        https://github.com/ThornsW/bangumi-list
  * Description:       一个独立风格的「看番清单」页面:注册「动漫」内容类型,后台像写文章一样记录看过的番(封面/评分/评语),前台用终端风海报网格展示。短代码 [anime_list]。
- * Version:           0.2.0
+ * Version:           0.3.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            ThornsW
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       bangumi-list
+ *
+ * 说明:本插件前台文案为硬编码简体中文,未做 i18n,故不声明 Text Domain。
+ * 需要其它语言请直接改 includes/render.php 与 assets/anime.js 中的字符串。
  */
 if (!defined('ABSPATH')) exit;
 
-define('BGM_VERSION', '0.2.0');
+define('BGM_VERSION', '0.3.0');
 define('BGM_DIR', plugin_dir_path(__FILE__));
 define('BGM_URL', plugin_dir_url(__FILE__));
 
@@ -79,7 +81,7 @@ function bgm_render_metabox($post) {
             <option value="常规" <?php selected($mode, '常规'); ?>>常规</option>
             <option value="速看" <?php selected($mode, '速看'); ?>>速看</option>
         </select></label>
-        &nbsp;<span style="color:#888">（后台保留,前台不显示)</span></p>
+        &nbsp;<span style="color:#888">(后台保留,前台不显示)</span></p>
     <p><label>Bangumi 链接(选填)<br>
         <input type="url" name="bgm_url" value="<?php echo esc_attr($url); ?>" style="width:100%"></label></p>
     <?php

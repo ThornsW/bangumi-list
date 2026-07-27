@@ -33,6 +33,12 @@
   cursor:pointer; transition:transform .16s, box-shadow .16s, border-color .16s; }
 .bgm-card:hover{ transform:translateY(-4px); border-color:var(--acc); box-shadow:0 12px 26px rgba(0,0,0,.5); }
 .bgm-poster{ position:relative; aspect-ratio:3/4; background:#0e1620; display:grid; place-items:center; overflow:hidden; }
+/* 主题的懒加载 / 灯箱脚本常把 <img> 的 class 换掉再套一层 wrapper(实测 Argon 主题会,
+   bgm-cover 被替换成 lazyload-*)。只把规则挂在 .bgm-cover 上,object-fit 就整个失效,
+   退化成「图按固有尺寸居中 + overflow 硬裁」—— 每张封面的取景还都不一样。
+   所以按位置选:海报框里除插件自己的 .bgm-* 元素外,中间层一律铺满,最内层 img 再做 cover。 */
+.bgm-poster > *:not([class^="bgm-"]):not([class*=" bgm-"]){ position:absolute; inset:0; width:100%; height:100%; }
+.bgm-poster img{ width:100%; height:100%; object-fit:cover; display:block; }
 .bgm-cover{ width:100%; height:100%; object-fit:cover; display:block; }
 .bgm-poster:not(.bgm-ph)::after{ content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(6,8,12,.92), rgba(6,8,12,.05) 55%); }
 .bgm-badge{ position:absolute; top:.45rem; right:.45rem; z-index:2; font-family:var(--mono); font-size:.74rem; font-weight:800;

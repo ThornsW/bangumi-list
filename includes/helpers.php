@@ -1,5 +1,6 @@
 <?php
-if (!defined('ABSPATH') && !defined('BGM_TEST')) { /* 允许被测试直接 require */ }
+// 非 WordPress 环境直接退出;定义 BGM_TEST 可绕过,便于单测直接 require 本文件。
+if (!defined('ABSPATH') && !defined('BGM_TEST')) exit;
 
 /** 去除首尾书名号/方括号与空白,得到搜索用主标题 */
 function bgm_normalize_title($title) {
