@@ -26,6 +26,24 @@ function bgm_parse_rating($text) {
 }
 
 /**
+ * 评分的前台展示形态:数值与「/10」后缀分开返回,便于把后缀渲染成弱化样式。
+ *
+ * 后台只需填数字(如 9.7),后缀由前台补;旧数据里手写成 9.7/10 的也归一到同一形态,
+ * 不会出现 9.7/10/10。「神作」「不做评价」这类自由文本原样返回,不补后缀。
+ *
+ * @return array{num:string,unit:string} num 为显示主体(保留用户写的字面量,7 不会变成 7.0),
+ *                                       unit 为 '/10' 或 ''(自由文本时)
+ */
+function bgm_rating_display($text) {
+    $s = trim((string) $text);
+    if ($s === '') return ['num' => '', 'unit' => ''];
+    if (preg_match('#^(\d+(?:\.\d+)?)\s*(?:/\s*10)?$#u', $s, $m) && (float) $m[1] <= 10) {
+        return ['num' => $m[1], 'unit' => '/10'];
+    }
+    return ['num' => $s, 'unit' => ''];
+}
+
+/**
  * mb_strtolower 的安全封装。
  * WordPress 只 polyfill 了 mb_substr,没有 mb_strtolower;宿主机缺 mbstring 扩展时
  * 直接调用会 fatal error 白屏,故在此退回 strtolower(中文无大小写,不影响搜索)。

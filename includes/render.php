@@ -96,7 +96,9 @@ function bgm_render_list($atts = []) {
                 $review = get_post_meta($id, '_bgm_review', true);
                 $score  = ($rv === '' || $rv === null) ? null : (float) $rv;
                 $pct    = $score === null ? 0 : max(0, min(100, $score * 10));
-                $badge  = $rt !== '' ? $rt : '—';
+                $rd     = bgm_rating_display($rt);
+                $badge  = $rd['num'] !== '' ? $rd['num'] : '—';
+                $unit   = $rd['num'] !== '' ? $rd['unit'] : '';
                 $ts     = get_post_time('U', true, $p);
                 $searchKey = bgm_strtolower($title);
             ?>
@@ -111,7 +113,8 @@ function bgm_render_list($atts = []) {
                   <div class="bgm-phinner"><div class="bgm-phttl"><?php echo esc_html(bgm_normalize_title($title)); ?></div>
                     <div class="bgm-phtag">· 待配封面 ·</div></div>
                 <?php endif; ?>
-                <span class="bgm-badge"><?php echo esc_html($badge); ?></span>
+                <span class="bgm-badge"><?php echo esc_html($badge);
+                  if ($unit !== '') : ?><i class="bgm-badge-u"><?php echo esc_html($unit); ?></i><?php endif; ?></span>
                 <span class="bgm-ptitle"><?php echo esc_html($title); ?></span>
               </div>
               <div class="bgm-meter">

@@ -11,7 +11,7 @@
 ## 特性
 
 - 注册「动漫」内容类型(CPT `anime`),后台增删改,自带列表 / 编辑界面(特色图当封面)
-- 每部番:番名、封面、评分(自由文本,如 `9.7/10`,也能写"神作"这种)、评语、观看方式、Bangumi 链接
+- 每部番:番名、封面、评分(只写数字如 `9.7`,前台自动补 `/10`;也能写"神作"这种自由文本)、评语、观看方式、Bangumi 链接
 - 前台短代码 `[anime_list]`:终端窗口外壳 + 海报网格,评分徽章 + 进度条,悬停(桌面)/ 点按(移动)看评语
 - 前端搜索(番名)+ 按评分 / 最近添加排序,纯 JS,无需翻页
 - 封面可自动抓取(mikan / Bangumi,带比例校验挡掉横版图),或后台手动上传;抓不到自动用「文字卡」占位
@@ -72,8 +72,10 @@ mv bangumi-list-main bangumi-list
 JSON 格式(见 `examples/sample-anime.json`):
 
 ```json
-[{ "title": "番名", "rating": "9.7/10", "review": "评语", "watch_mode": "常规" }]
+[{ "title": "番名", "rating": "9.7", "review": "评语", "watch_mode": "常规" }]
 ```
+
+`rating` 只写数字即可,`/10` 由前台补。写成 `9.7/10` 也认(渲染时会归一,不会变成 `9.7/10/10`)。
 
 导入:
 
@@ -185,7 +187,14 @@ add_filter('bangumi_list_cover_min_width', fn() => 300);
 
 ## 数据模型
 
-CPT `anime` + post meta:`_bgm_rating_text`(评分文本)、`_bgm_rating_value`(解析出的数字,排序用)、`_bgm_review`(评语)、`_bgm_watch_mode`(观看方式,前台不显示)、`_bgm_url`(bgm 链接)。
+CPT `anime` + post meta:`_bgm_rating_text`(评分文本,填数字即可)、`_bgm_rating_value`(解析出的数字,排序用)、`_bgm_review`(评语)、`_bgm_watch_mode`(观看方式,前台不显示)、`_bgm_url`(bgm 链接)。
+
+老库里手写了 `/10` 的,想清成纯数字可跑一次(可选,不跑也不影响显示):
+
+```bash
+wp bangumi normalize-ratings --dry-run   # 先看会改什么
+wp bangumi normalize-ratings
+```
 
 ## 注意
 

@@ -54,6 +54,51 @@ class BGM_CLI_Command {
     }
 
     /**
+     * 把库里的评分文本归一成「只留数字」,去掉手写的 /10 后缀。
+     *
+     * 前台已改为自动补 /10,旧数据里写成 9.7/10 的照样显示正常(渲染时会归一,
+     * 不会出现 9.7/10/10),所以本命令只是让库里的值和现在后台该填的写法保持一致,
+     * 属于可选的清理。「不做评价」这类自由文本不动。可反复跑。
+     *
+     * ## OPTIONS
+     * [--dry-run]
+     * : 只报告将要改什么,不写数据库。
+     *
+     * ## EXAMPLES
+     *     wp bangumi normalize-ratings --dry-run
+     *     wp bangumi normalize-ratings
+     *
+     * @subcommand normalize-ratings
+     * @when after_wp_load
+     */
+    public function normalize_ratings($args, $assoc) {
+        $dry = isset($assoc['dry-run']);
+        if ($dry) WP_CLI::log("--dry-run:只报告,不写库\n");
+
+        $ids = get_posts(['post_type' => 'anime', 'posts_per_page' => -1, 'post_status' => 'any', 'fields' => 'ids']);
+
+        $changed = 0; $same = 0; $text = 0;
+        foreach ($ids as $id) {
+            $old = (string) get_post_meta($id, '_bgm_rating_text', true);
+            $d   = bgm_rating_display($old);
+
+            if ($d['unit'] === '') { $text++; continue; }   // 空或自由文本,不动
+            if ($d['num'] === $old) { $same++; continue; }  // 已经是纯数字
+
+            WP_CLI::log(($dry ? 'WOULD: ' : 'OK: ') . get_the_title($id) . "  [{$old}] → [{$d['num']}]");
+            if (!$dry) {
+                update_post_meta($id, '_bgm_rating_text', $d['num']);
+                // 数值 meta 理论上不变,顺手重算一遍保证两者始终同步
+                $val = bgm_parse_rating($d['num']);
+                update_post_meta($id, '_bgm_rating_value', $val === null ? '' : $val);
+            }
+            $changed++;
+        }
+
+        WP_CLI::success("normalize-ratings changed=$changed 已是数字=$same 非数字或空=$text");
+    }
+
+    /**
      * 为没有封面的番从 Bangumi 抓取并设为特色图(需服务器能访问 api.bgm.tv)。
      *
      * 会逐个试搜索结果,第一个通过比例闸(默认宽/高 0.5–0.9)的才收下,

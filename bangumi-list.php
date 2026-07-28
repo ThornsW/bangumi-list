@@ -3,7 +3,7 @@
  * Plugin Name:       Bangumi List 看番清单
  * Plugin URI:        https://github.com/ThornsW/bangumi-list
  * Description:       一个独立风格的「看番清单」页面:注册「动漫」内容类型,后台像写文章一样记录看过的番(封面/评分/评语),前台用终端风海报网格展示。短代码 [anime_list]。
- * Version:           0.3.0
+ * Version:           0.4.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            ThornsW
@@ -15,7 +15,7 @@
  */
 if (!defined('ABSPATH')) exit;
 
-define('BGM_VERSION', '0.3.0');
+define('BGM_VERSION', '0.4.0');
 define('BGM_DIR', plugin_dir_path(__FILE__));
 define('BGM_URL', plugin_dir_url(__FILE__));
 
@@ -72,8 +72,8 @@ function bgm_render_metabox($post) {
     $mode   = get_post_meta($post->ID, '_bgm_watch_mode', true) ?: '常规';
     $url    = get_post_meta($post->ID, '_bgm_url', true);
     ?>
-    <p><label>评分(自由文本,如 <code>9.7/10</code>)<br>
-        <input type="text" name="bgm_rating_text" value="<?php echo esc_attr($rating); ?>" style="width:100%"></label></p>
+    <p><label>评分(只写数字,如 <code>9.7</code>,前台自动补 <code>/10</code>;也可填「神作」这类文本)<br>
+        <input type="text" name="bgm_rating_text" value="<?php echo esc_attr($rating); ?>" placeholder="9.7" style="width:100%"></label></p>
     <p><label>评语<br>
         <textarea name="bgm_review" rows="4" style="width:100%"><?php echo esc_textarea($review); ?></textarea></label></p>
     <p><label>观看方式
