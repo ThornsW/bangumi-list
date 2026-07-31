@@ -44,6 +44,65 @@ function bgm_rating_display($text) {
 }
 
 /**
+ * 评分档位。返回 key(拼进 CSS class)与 label(前台文案)。
+ *
+ * 区间「上闭下开」,端点归上一档;评分大量落在 9.5 / 8.5 / 7.5 这几个端点上,
+ * 端点归属直接决定显示结果。最低档写作 < 6.7 而非 <= 6.6,以免 6.61–6.69 无档可归。
+ *
+ * ⚠️「神了」是反讽的贬义,和最高档「神作」只差一字、方向相反,
+ *   故两档配色必须对立(绿 vs 红),不能靠文案区分。
+ */
+function bgm_rating_tiers() {
+    // 阈值降序,min 为 null 是兜底档。后台的档位预览经 json_encode 读同一张表,
+    // 阈值只此一份,勿在 JS 或 CSS 中重复。
+    return [
+        ['min' => 9.5,  'key' => 'god',  'label' => '神作'],
+        ['min' => 8.5,  'key' => 'good', 'label' => '还不错'],
+        ['min' => 7.5,  'key' => 'npc',  'label' => 'NPC'],
+        ['min' => 6.7,  'key' => 'meh',  'label' => '拉完了'],
+        ['min' => null, 'key' => 'bad',  'label' => '神了'],
+    ];
+}
+
+function bgm_rating_tier($score) {
+    if ($score === null || $score === '') return ['key' => 'none', 'label' => '—'];
+    $s = (float) $score;
+    foreach (bgm_rating_tiers() as $t) {
+        if ($t['min'] === null || $s >= $t['min']) {
+            return ['key' => $t['key'], 'label' => $t['label']];
+        }
+    }
+    return ['key' => 'bad', 'label' => '神了'];
+}
+
+/** 评分数值统一成 x.x(7 显示为 7.0);无评分返回全角破折号 */
+function bgm_rating_number($score) {
+    if ($score === null || $score === '') return '—';
+    return number_format((float) $score, 1);
+}
+
+/**
+ * 观看方式的行内简写,只归两态。
+ *
+ * 数据里存在「常规+二刷+补了漫画」这类长文本,与进度条、评分同处一行放不下,
+ * 故行内只显示「速看 / 常规」,完整原文由悬浮层展示。
+ */
+function bgm_watch_mode_short($mode) {
+    $m = trim((string) $mode);
+    if ($m !== '' && bgm_strpos($m, '速看') !== false) {
+        return ['key' => 'quick', 'label' => '速看'];
+    }
+    return ['key' => 'normal', 'label' => '常规'];
+}
+
+/** strpos 的多字节安全封装,理由同 bgm_strtolower(宿主可能缺 mbstring) */
+function bgm_strpos($haystack, $needle) {
+    return function_exists('mb_strpos')
+        ? mb_strpos((string) $haystack, (string) $needle)
+        : strpos((string) $haystack, (string) $needle);
+}
+
+/**
  * mb_strtolower 的安全封装。
  * WordPress 只 polyfill 了 mb_substr,没有 mb_strtolower;宿主机缺 mbstring 扩展时
  * 直接调用会 fatal error 白屏,故在此退回 strtolower(中文无大小写,不影响搜索)。

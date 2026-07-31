@@ -3,7 +3,7 @@
  * Plugin Name:       Bangumi List 看番清单
  * Plugin URI:        https://github.com/ThornsW/bangumi-list
  * Description:       一个独立风格的「看番清单」页面:注册「动漫」内容类型,后台像写文章一样记录看过的番(封面/评分/评语),前台用终端风海报网格展示。短代码 [anime_list]。
- * Version:           0.4.0
+ * Version:           0.5.2
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            ThornsW
@@ -15,7 +15,7 @@
  */
 if (!defined('ABSPATH')) exit;
 
-define('BGM_VERSION', '0.4.0');
+define('BGM_VERSION', '0.5.2');
 define('BGM_DIR', plugin_dir_path(__FILE__));
 define('BGM_URL', plugin_dir_url(__FILE__));
 
@@ -71,19 +71,47 @@ function bgm_render_metabox($post) {
     $review = get_post_meta($post->ID, '_bgm_review', true);
     $mode   = get_post_meta($post->ID, '_bgm_watch_mode', true) ?: '常规';
     $url    = get_post_meta($post->ID, '_bgm_url', true);
+    $tier   = bgm_rating_tier(bgm_parse_rating($rating));
     ?>
-    <p><label>评分(只写数字,如 <code>9.7</code>,前台自动补 <code>/10</code>;也可填「神作」这类文本)<br>
-        <input type="text" name="bgm_rating_text" value="<?php echo esc_attr($rating); ?>" placeholder="9.7" style="width:100%"></label></p>
+    <p><label>评分(只写数字,如 <code>9.7</code>;前台按数值折算档位并显示 <code>x.x</code>。也可填「不做评价」这类文本)<br>
+        <input type="text" name="bgm_rating_text" id="bgm-rating-input" value="<?php echo esc_attr($rating); ?>" placeholder="9.7" style="width:100%"></label>
+        <span style="color:#888">前台档位:</span>
+        <b id="bgm-tier-preview"><?php echo esc_html($tier['label']); ?></b></p>
     <p><label>评语<br>
         <textarea name="bgm_review" rows="4" style="width:100%"><?php echo esc_textarea($review); ?></textarea></label></p>
     <p><label>观看方式
         <select name="bgm_watch_mode">
             <option value="常规" <?php selected($mode, '常规'); ?>>常规</option>
             <option value="速看" <?php selected($mode, '速看'); ?>>速看</option>
+            <?php
+            // 数据中存在下拉之外的历史值(如「常规+二刷+补了漫画」)。
+            // 不补成选项的话,打开这类条目保存后会被静默重置为「常规」。
+            if ($mode !== '' && $mode !== '常规' && $mode !== '速看') : ?>
+            <option value="<?php echo esc_attr($mode); ?>" selected><?php echo esc_html($mode); ?></option>
+            <?php endif; ?>
         </select></label>
-        &nbsp;<span style="color:#888">(后台保留,前台不显示)</span></p>
+        &nbsp;<span style="color:#888">(卡片进度条那行显示「速看/常规」,完整文字显示在悬浮的评语层里)</span></p>
     <p><label>Bangumi 链接(选填)<br>
-        <input type="url" name="bgm_url" value="<?php echo esc_attr($url); ?>" style="width:100%"></label></p>
+        <input type="url" name="bgm_url" value="<?php echo esc_attr($url); ?>" placeholder="https://bgm.tv/subject/12345" style="width:100%"></label>
+        <span style="color:#888">填了前台卡片就可点击跳转;留空则不可点。</span></p>
+    <script>
+    /* 档位预览。阈值由 bgm_rating_tiers() 注入,不在此写死,避免前后台各存一套边界。 */
+    (function () {
+        var tiers = <?php echo wp_json_encode(bgm_rating_tiers()); ?>;
+        var input = document.getElementById('bgm-rating-input');
+        var out   = document.getElementById('bgm-tier-preview');
+        if (!input || !out) return;
+        input.addEventListener('input', function () {
+            var s = input.value.trim();
+            if (!/^\d+(\.\d+)?$/.test(s) || parseFloat(s) > 10) { out.textContent = '—'; return; }
+            var v = parseFloat(s);
+            for (var i = 0; i < tiers.length; i++) {
+                if (tiers[i].min === null || v >= tiers[i].min) { out.textContent = tiers[i].label; return; }
+            }
+            out.textContent = '—';
+        });
+    })();
+    </script>
     <?php
 }
 

@@ -31,11 +31,23 @@
     if (search) search.addEventListener('input', applySearch);
     if (sortBtn) sortBtn.addEventListener('click', function () {
       sortMode = (sortMode === 'score') ? 'date' : 'score';
-      var b = sortBtn.querySelector('b'); if (b) b.textContent = (sortMode === 'score') ? '评分 ↓' : '最近添加 ↓';
+      // 文案读 PHP 渲染的 data 属性,勿在此写死:初始文案在 render.php,两处硬编码会不一致
+      var b = sortBtn.querySelector('b');
+      if (b) b.textContent = sortBtn.getAttribute(
+        sortMode === 'score' ? 'data-label-score' : 'data-label-date') || '';
       applySort();
     });
+    // 触屏无 hover,卡片的 <a> 跳转须让位于「展开评语」,否则评语在移动端不可达。
+    // 「bgm ↗」是触屏下唯一的跳转出口,对其放行,沿用外层 <a> 的 href。
     if (window.matchMedia && window.matchMedia('(hover: none)').matches) {
-      cards.forEach(function (c) { c.addEventListener('click', function () { c.classList.toggle('is-open'); }); });
+      cards.forEach(function (c) {
+        c.addEventListener('click', function (e) {
+          var t = e.target;
+          if (t && t.closest && t.closest('.bgm-go')) return;
+          e.preventDefault();
+          c.classList.toggle('is-open');
+        });
+      });
     }
     applySort();
   });

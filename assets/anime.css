@@ -29,9 +29,13 @@
 .bgm-search-input::placeholder{ color:#4b5568; }
 
 .bgm-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(148px,1fr)); gap:1rem; }
-.bgm-card{ position:relative; border-radius:11px; overflow:hidden; background:#11151d; border:1px solid #1c2330;
+.bgm-card{ position:relative; display:block; border-radius:11px; overflow:hidden; background:#11151d; border:1px solid #1c2330;
   cursor:pointer; transition:transform .16s, box-shadow .16s, border-color .16s; }
+/* 有 bgm 链接的卡片渲染成 <a>,需压掉主题给链接加的下划线与颜色 */
+a.bgm-card{ text-decoration:none; color:inherit; }
+a.bgm-card:hover{ text-decoration:none; }
 .bgm-card:hover{ transform:translateY(-4px); border-color:var(--acc); box-shadow:0 12px 26px rgba(0,0,0,.5); }
+.bgm-card:focus-visible{ outline:2px solid var(--acc); outline-offset:2px; }
 .bgm-poster{ position:relative; aspect-ratio:3/4; background:#0e1620; display:grid; place-items:center; overflow:hidden; }
 /* 主题的懒加载 / 灯箱脚本常把 <img> 的 class 换掉再套一层 wrapper(实测 Argon 主题会,
    bgm-cover 被替换成 lazyload-*)。只把规则挂在 .bgm-cover 上,object-fit 就整个失效,
@@ -41,10 +45,17 @@
 .bgm-poster img{ width:100%; height:100%; object-fit:cover; display:block; }
 .bgm-cover{ width:100%; height:100%; object-fit:cover; display:block; }
 .bgm-poster:not(.bgm-ph)::after{ content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(6,8,12,.92), rgba(6,8,12,.05) 55%); }
-.bgm-badge{ position:absolute; top:.45rem; right:.45rem; z-index:2; font-family:var(--mono); font-size:.74rem; font-weight:800;
-  color:#08130b; background:var(--acc); border-radius:6px; padding:.08rem .4rem; }
-/* 前台自动补的「/10」:比分数弱一档,读起来是单位而不是分数的一部分 */
-.bgm-badge-u{ font-style:normal; font-weight:600; font-size:.86em; opacity:.6; }
+.bgm-badge{ position:absolute; top:.45rem; right:.45rem; z-index:2; font-family:var(--mono); font-size:.7rem; font-weight:800;
+  color:#08130b; background:#8b949e; border-radius:6px; padding:.08rem .4rem; white-space:nowrap; }
+/* 五档配色。「神作」(最高)与「神了」(最低,反讽贬义)只差一字、方向相反,
+   两档必须落在色轮对立面(绿 vs 红),不能靠文案区分。
+   档位文案本身已携带全部信息,颜色仅作冗余强化。 */
+.bgm-badge.bgm-t-god { background:#7ee787; }              /* 神作   绿 */
+.bgm-badge.bgm-t-good{ background:#79c0ff; }              /* 还不错 蓝 */
+.bgm-badge.bgm-t-npc { background:#8b949e; }              /* NPC    灰 */
+.bgm-badge.bgm-t-meh { background:#ffa657; }              /* 拉完了 橙 */
+.bgm-badge.bgm-t-bad { background:#ff7b72; }              /* 神了   红 */
+.bgm-badge.bgm-t-none{ background:#30363d; color:#8b949e; } /* 无评分 */
 .bgm-ptitle{ position:absolute; left:.5rem; right:.5rem; bottom:.45rem; z-index:2; font-family:var(--mono); color:#fff;
   font-size:.74rem; font-weight:700; line-height:1.25; text-shadow:0 1px 5px #000;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
@@ -54,18 +65,34 @@
 .bgm-phtag{ margin-top:.5rem; font-family:var(--mono); font-size:.62rem; color:#556; letter-spacing:.1em; }
 
 .bgm-meter{ display:flex; align-items:center; gap:.4rem; padding:.45rem .55rem; font-family:var(--mono); }
-.bgm-track{ flex:1; height:5px; border-radius:3px; background:#232b3a; overflow:hidden; }
+.bgm-track{ flex:1; min-width:0; height:5px; border-radius:3px; background:#232b3a; overflow:hidden; }
 .bgm-fill{ display:block; height:100%; background:var(--acc); border-radius:3px; }
-.bgm-score{ font-size:.72rem; color:#cdd6e2; }
+/* 观看方式行内只有「速看/常规」两态,长文本在 PHP 侧归并(见 bgm_watch_mode_short)。
+   与评分同色:同一行的三个元素是平级数据。#cdd6e2 在 #11151d 上为 12.46:1,勿调暗。 */
+.bgm-mode-i{ font-size:.7rem; color:#cdd6e2; white-space:nowrap; }
+/* 「速看」是评分的限定条件(速看与完整看完的同一分数含义不同),用暖色区分。
+   取琥珀 #e3b341 而非 #ffa657:后者是「拉完了」档位角标的橙,同卡两处橙会混为一类信号。 */
+.bgm-mode-quick{ color:#e3b341; }
+/* tabular-nums:9.5 与 10.0 等宽,同列卡片右缘对齐 */
+.bgm-score{ font-size:.72rem; color:#cdd6e2; white-space:nowrap; font-variant-numeric:tabular-nums; }
 
 .bgm-review{ position:absolute; inset:0; z-index:3; background:rgba(8,11,17,.94); padding:.7rem; font-family:var(--mono);
   font-size:.73rem; color:#c9d4e2; line-height:1.5; opacity:0; transition:opacity .16s; display:flex; flex-direction:column; gap:.35rem;
   overflow:auto; }
 @media (hover:hover){ .bgm-card:hover .bgm-review{ opacity:1; } }
 .bgm-card.is-open .bgm-review{ opacity:1; }
+/* 键盘入口:Tab 到卡片即展开评语,继续 Tab 落在「bgm ↗」上。
+   此规则不可省 —— 否则链接位于 opacity:0 的层内却可聚焦,即「可聚焦但不可见」。 */
+.bgm-card:focus-within .bgm-review{ opacity:1; }
 .bgm-rt{ color:var(--acc); font-weight:700; font-size:.72rem; }
 .bgm-rc{ white-space:pre-line; }
 .bgm-rc::before{ content:"> "; color:var(--acc); }
+/* 悬浮层底栏:观看方式完整原文 + 触屏的跳转出口 */
+.bgm-rf{ margin-top:auto; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+  padding-top:.4rem; border-top:1px solid #1c2330; }
+.bgm-rmode{ font-style:normal; font-size:.7rem; color:#cdd6e2; }
+.bgm-go{ margin-left:auto; font-size:.68rem; color:var(--acc); border:1px solid #2c3646;
+  border-radius:5px; padding:.1rem .4rem; white-space:nowrap; }
 
 .bgm-footline{ margin-top:1.2rem; font-family:var(--mono); color:#4b5568; font-size:.78rem; } .bgm-footline .bgm-dollar{ color:var(--acc); }
 

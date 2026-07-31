@@ -82,7 +82,12 @@ function bgm_render_list($atts = []) {
           <div class="bgm-toolbar">
             <span class="bgm-count">// <?php echo (int) $count; ?> 部</span>
             <span class="bgm-grow"></span>
-            <button type="button" class="bgm-sort">sort: <b>评分 ↓</b></button>
+            <?php // 排序文案只此一份,anime.js 切换时读 data 属性
+            $sort_score = '评分 ↓'; $sort_date = '最近添加 ↓'; ?>
+            <button type="button" class="bgm-sort"
+                    data-label-score="<?php echo esc_attr($sort_score); ?>"
+                    data-label-date="<?php echo esc_attr($sort_date); ?>">sort: <b><?php
+              echo esc_html($sort_score); ?></b></button>
             <span class="bgm-search"><span class="bgm-g">grep</span>
               <input type="text" class="bgm-search-input" placeholder="搜番名…" aria-label="搜索番名"></span>
           </div>
@@ -91,20 +96,27 @@ function bgm_render_list($atts = []) {
             <?php foreach ($posts as $p) :
                 $id     = $p->ID;
                 $title  = get_the_title($p);
-                $rt     = get_post_meta($id, '_bgm_rating_text', true);
                 $rv     = get_post_meta($id, '_bgm_rating_value', true);
                 $review = get_post_meta($id, '_bgm_review', true);
+                $mode   = get_post_meta($id, '_bgm_watch_mode', true);
+                $url    = get_post_meta($id, '_bgm_url', true);
                 $score  = ($rv === '' || $rv === null) ? null : (float) $rv;
                 $pct    = $score === null ? 0 : max(0, min(100, $score * 10));
-                $rd     = bgm_rating_display($rt);
-                $badge  = $rd['num'] !== '' ? $rd['num'] : '—';
-                $unit   = $rd['num'] !== '' ? $rd['unit'] : '';
+                $tier   = bgm_rating_tier($score);
                 $ts     = get_post_time('U', true, $p);
-                $searchKey = bgm_strtolower($title);
+                // 搜索范围含评语:悬浮层内容同属清单数据
+                $searchKey = bgm_strtolower($title . ' ' . (string) $review);
+                // 有链接的渲染成 <a>,直接获得键盘可达性与语义;无链接的退回 div 并补 tabindex,
+                // 否则这些卡片的评语对键盘用户不可达。
+                $tag   = $url ? 'a' : 'div';
+                $attrs = $url
+                    ? ' href="' . esc_url($url) . '" target="_blank" rel="noopener noreferrer"'
+                    : ' tabindex="0"';
             ?>
-            <div class="bgm-card" data-title="<?php echo esc_attr($searchKey); ?>"
+            <<?php echo $tag . $attrs; ?> class="bgm-card" data-title="<?php echo esc_attr($searchKey); ?>"
                  data-score="<?php echo $score === null ? '' : esc_attr($score); ?>"
-                 data-date="<?php echo esc_attr($ts); ?>">
+                 data-date="<?php echo esc_attr($ts); ?>"
+                 title="<?php echo esc_attr($title); ?>">
               <div class="bgm-poster<?php echo has_post_thumbnail($id) ? '' : ' bgm-ph'; ?>">
                 <?php if (has_post_thumbnail($id)) : ?>
                   <?php echo get_the_post_thumbnail($id, 'medium', ['class' => 'bgm-cover', 'loading' => 'lazy', 'alt' => esc_attr($title)]); ?>
@@ -113,19 +125,35 @@ function bgm_render_list($atts = []) {
                   <div class="bgm-phinner"><div class="bgm-phttl"><?php echo esc_html(bgm_normalize_title($title)); ?></div>
                     <div class="bgm-phtag">· 待配封面 ·</div></div>
                 <?php endif; ?>
-                <span class="bgm-badge"><?php echo esc_html($badge);
-                  if ($unit !== '') : ?><i class="bgm-badge-u"><?php echo esc_html($unit); ?></i><?php endif; ?></span>
+                <span class="bgm-badge bgm-t-<?php echo esc_attr($tier['key']); ?>"><?php
+                  echo esc_html($tier['label']); ?></span>
                 <span class="bgm-ptitle"><?php echo esc_html($title); ?></span>
               </div>
               <div class="bgm-meter">
                 <span class="bgm-track"><span class="bgm-fill" style="width:<?php echo esc_attr($pct); ?>%"></span></span>
-                <span class="bgm-score"><?php echo $score === null ? '—' : esc_html(rtrim(rtrim(number_format($score, 1), '0'), '.')); ?></span>
+                <?php $ms = bgm_watch_mode_short($mode); ?>
+                <span class="bgm-mode-i bgm-mode-<?php echo esc_attr($ms['key']); ?>"><?php
+                  echo esc_html($ms['label']); ?></span>
+                <span class="bgm-score"><?php echo esc_html(bgm_rating_number($score)); ?></span>
               </div>
-              <?php if (trim((string) $review) !== '') : ?>
               <div class="bgm-review"><span class="bgm-rt"><?php echo esc_html($title); ?></span>
-                <span class="bgm-rc"><?php echo esc_html($review); ?></span></div>
-              <?php endif; ?>
-            </div>
+                <?php if (trim((string) $review) !== '') : ?>
+                <span class="bgm-rc"><?php echo esc_html($review); ?></span>
+                <?php endif; ?>
+                <span class="bgm-rf">
+                  <?php // 观看方式的完整原文,补全行内简写掉的信息
+                  if (trim((string) $mode) !== '') : ?>
+                  <em class="bgm-rmode"><?php echo esc_html($mode); ?></em>
+                  <?php endif; ?>
+                  <?php // 触屏下卡片自身的跳转被 JS 拦截用于展开评语,故提供显式出口。
+                        // 用 span 而非 a:外层已是 <a>,嵌套链接为非法 HTML;
+                        // JS 对此元素不拦截,点击沿用外层 href。
+                  if ($url) : ?>
+                  <span class="bgm-go">bgm ↗</span>
+                  <?php endif; ?>
+                </span>
+              </div>
+            </<?php echo $tag; ?>>
             <?php endforeach; ?>
           </div>
 
